@@ -1,0 +1,52 @@
+.app-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.actions-bar {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.data-table {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-panel {
+  margin-bottom: 20px;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
