@@ -1,0 +1,17 @@
+# Python 
+__pycache__/ 
+venv/ 
+*.pyc 
+.env 
+Режим вывода команд на экран (ECHO) включен.
+# Node 
+node_modules/ 
+package-lock.json 
+Режим вывода команд на экран (ECHO) включен.
+# Excel 
+*.xlsx 
+*.xls 
+Режим вывода команд на экран (ECHO) включен.
+# IDE 
+.vscode/ 
+.idea/ 
