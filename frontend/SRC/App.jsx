@@ -10,6 +10,30 @@ import ConfirmDialog from './components/ConfirmDialog';
 import { worksApi } from './services/api';
 import './App.css';
 
+
+
+
+
+
+import React from 'react';
+import { Theme, presetGpnDefault } from '@consta/uikit/Theme'; // <-- Тема и пресет берутся из uikit
+import { Button } from '@consta/uikit/Button';
+
+const App = () => (
+  <Theme preset={presetGpnDefault}>
+    {/* Теперь все компоненты Consta будут работать и иметь правильный внешний вид */}
+    <Button label="Кнопка" />
+  </Theme>
+);
+
+
+
+
+
+
+
+
+
 function App() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
