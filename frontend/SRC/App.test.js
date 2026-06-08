@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders table with title', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const titleElement = screen.getByText(/Наряд-допуски/i);
+  expect(titleElement).toBeInTheDocument();
+});
+
+test('displays filter panel', () => {
+  render(<App />);
+  const filterButton = screen.getByText(/Применить фильтр/i);
+  expect(filterButton).toBeInTheDocument();
 });
