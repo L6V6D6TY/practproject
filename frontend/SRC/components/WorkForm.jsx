@@ -13,7 +13,7 @@ const WorkForm = ({ isOpen, onClose, onSubmit, initialData, isEditing }) => {
   });
 
   useEffect(() => {
-    if (initialData) {
+    if (initialData && isEditing) {
       setFormData({
         doc_number: initialData.doc_number || '',
         status: initialData.status || '',
@@ -21,7 +21,7 @@ const WorkForm = ({ isOpen, onClose, onSubmit, initialData, isEditing }) => {
         department: initialData.department || '',
         work_foreman: initialData.work_foreman || '',
       });
-    } else {
+    } else if (!isEditing) {
       setFormData({
         doc_number: '',
         status: '',
@@ -30,7 +30,7 @@ const WorkForm = ({ isOpen, onClose, onSubmit, initialData, isEditing }) => {
         work_foreman: '',
       });
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isEditing, isOpen]);
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -42,7 +42,6 @@ const WorkForm = ({ isOpen, onClose, onSubmit, initialData, isEditing }) => {
       return;
     }
     onSubmit(formData);
-    onClose();
   };
 
   const inputStyle = {

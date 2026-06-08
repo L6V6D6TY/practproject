@@ -20,11 +20,50 @@ function App() {
     try {
       let url = 'http://localhost:8000/api/works';
       if (field && value) {
-        url = `http://localhost:8000/api/works?field=${field}&value=${value}`;
+        url = `http://localhost:8000/api/works?field=${field}&value=${encodeURIComponent(value)}`;
       }
       const response = await axios.get(url);
       const items = response.data.items || [];
-      setData(items);
+
+      // ============================================================
+      // ГЛАВНОЕ ИЗМЕНЕНИЕ: добавляем кнопки в каждую строку вручную
+      // ============================================================
+      const itemsWithButtons = items.map((item) => ({
+        ...item,
+        actions: (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => handleEdit(item)}
+              style={{
+                cursor: 'pointer',
+                padding: '4px 8px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+              }}
+            >
+              Редактировать
+            </button>
+            <button
+              onClick={() => handleDelete(item)}
+              style={{
+                cursor: 'pointer',
+                padding: '4px 8px',
+                backgroundColor: '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+              }}
+            >
+              Удалить
+            </button>
+          </div>
+        ),
+      }));
+      // ============================================================
+
+      setData(itemsWithButtons);
     } catch (error) {
       console.error('Ошибка:', error);
     } finally {
@@ -59,26 +98,12 @@ function App() {
     setIsConfirmOpen(true);
   };
 
-  const handleSubmitForm = async (formData) => {
-    try {
-      if (selectedWork) {
-        await axios.put(`http://localhost:8000/api/works/${selectedWork.id}`, formData);
-      } else {
-        await axios.post('http://localhost:8000/api/works', formData);
-      }
-      fetchData();
-      setIsFormOpen(false);
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert(error.response?.data?.detail || 'Произошла ошибка');
-    }
-  };
-
   const handleConfirmDelete = async () => {
     if (workToDelete) {
       try {
         await axios.delete(`http://localhost:8000/api/works/${workToDelete.id}`);
         fetchData();
+        alert('Запись удалена');
       } catch (error) {
         console.error('Ошибка:', error);
         alert('Ошибка при удалении');
@@ -89,23 +114,36 @@ function App() {
     }
   };
 
+  const handleSubmitForm = async (formData) => {
+    try {
+      if (selectedWork) {
+        await axios.put(`http://localhost:8000/api/works/${selectedWork.id}`, formData);
+        alert('Запись обновлена');
+      } else {
+        await axios.post('http://localhost:8000/api/works', formData);
+        alert('Запись добавлена');
+      }
+      fetchData();
+      setIsFormOpen(false);
+      setSelectedWork(null);
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert(error.response?.data?.detail || 'Произошла ошибка');
+    }
+  };
+
+  // ============================================================
+  // КОЛОНКИ: теперь просто выводим поле 'actions', где уже лежат кнопки
+  // ============================================================
   const columns = [
     { title: 'Номер документа', accessor: 'doc_number' },
     { title: 'Статус', accessor: 'status' },
     { title: 'Вид НД', accessor: 'work_type' },
     { title: 'Подразделение', accessor: 'department' },
     { title: 'Производитель работ', accessor: 'work_foreman' },
-    {
-      title: 'Действия',
-      accessor: 'actions',
-      cell: (row) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button size="s" onClick={() => handleEdit(row)}>✏️</Button>
-          <Button size="s" onClick={() => handleDelete(row)}>🗑️</Button>
-        </div>
-      ),
-    },
+    { title: 'Действия', accessor: 'actions' },  // <-- просто выводим готовые кнопки
   ];
+  // ============================================================
 
   return (
     <Theme preset={presetGpnDefault}>
@@ -123,7 +161,10 @@ function App() {
         
         <WorkForm
           isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => {
+            setIsFormOpen(false);
+            setSelectedWork(null);
+          }}
           onSubmit={handleSubmitForm}
           initialData={selectedWork}
           isEditing={!!selectedWork}
