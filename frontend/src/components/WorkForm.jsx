@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@consta/uikit/Modal';
+import { TextField } from '@consta/uikit/TextField';
 import { Button } from '@consta/uikit/Button';
 import { Card } from '@consta/uikit/Card';
 
@@ -32,33 +33,12 @@ const WorkForm = ({ isOpen, onClose, onSubmit, initialData, isEditing }) => {
     }
   }, [initialData, isEditing, isOpen]);
 
-  const handleChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
-
   const handleSubmit = () => {
     if (!formData.doc_number) {
       alert('Номер документа обязателен');
       return;
     }
     onSubmit(formData);
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    fontSize: '14px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    marginBottom: '16px',
-    boxSizing: 'border-box'
-  };
-
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '4px',
-    fontWeight: '500',
-    fontSize: '14px'
   };
 
   return (
@@ -68,56 +48,37 @@ const WorkForm = ({ isOpen, onClose, onSubmit, initialData, isEditing }) => {
           {isEditing ? 'Редактировать запись' : 'Добавить запись'}
         </h2>
         
-        <div>
-          <label style={labelStyle}>Номер документа *</label>
-          <input
-            type="text"
-            value={formData.doc_number}
-            onChange={(e) => handleChange('doc_number', e.target.value)}
-            disabled={isEditing}
-            style={inputStyle}
-          />
-        </div>
+        <TextField
+          label="Номер документа"
+          value={formData.doc_number}
+          onChange={({ value }) => setFormData({ ...formData, doc_number: value })}
+          disabled={isEditing}
+          required
+        />
         
-        <div>
-          <label style={labelStyle}>Статус</label>
-          <input
-            type="text"
-            value={formData.status}
-            onChange={(e) => handleChange('status', e.target.value)}
-            style={inputStyle}
-          />
-        </div>
+        <TextField
+          label="Статус"
+          value={formData.status}
+          onChange={({ value }) => setFormData({ ...formData, status: value })}
+        />
         
-        <div>
-          <label style={labelStyle}>Вид НД</label>
-          <input
-            type="text"
-            value={formData.work_type}
-            onChange={(e) => handleChange('work_type', e.target.value)}
-            style={inputStyle}
-          />
-        </div>
+        <TextField
+          label="Вид НД"
+          value={formData.work_type}
+          onChange={({ value }) => setFormData({ ...formData, work_type: value })}
+        />
         
-        <div>
-          <label style={labelStyle}>Подразделение</label>
-          <input
-            type="text"
-            value={formData.department}
-            onChange={(e) => handleChange('department', e.target.value)}
-            style={inputStyle}
-          />
-        </div>
+        <TextField
+          label="Подразделение"
+          value={formData.department}
+          onChange={({ value }) => setFormData({ ...formData, department: value })}
+        />
         
-        <div>
-          <label style={labelStyle}>Производитель работ</label>
-          <input
-            type="text"
-            value={formData.work_foreman}
-            onChange={(e) => handleChange('work_foreman', e.target.value)}
-            style={inputStyle}
-          />
-        </div>
+        <TextField
+          label="Производитель работ"
+          value={formData.work_foreman}
+          onChange={({ value }) => setFormData({ ...formData, work_foreman: value })}
+        />
         
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
           <Button label="Отмена" view="ghost" onClick={onClose} />

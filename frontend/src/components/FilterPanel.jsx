@@ -1,21 +1,58 @@
-import React from 'react';
-import { Modal } from '@consta/uikit/Modal';
+import React, { useState } from 'react';
+import { TextField } from '@consta/uikit/TextField';
 import { Button } from '@consta/uikit/Button';
+import { Select } from '@consta/uikit/Select';
 import { Card } from '@consta/uikit/Card';
 
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
+const FilterPanel = ({ onFilter, onReset }) => {
+  const [selectedField, setSelectedField] = useState(null);
+  const [filterValue, setFilterValue] = useState('');
+
+  const fieldOptions = [
+    { label: 'Номер документа', value: 'doc_number' },
+    { label: 'Статус', value: 'status' },
+    { label: 'Вид НД', value: 'work_type' },
+    { label: 'Подразделение', value: 'department' },
+    { label: 'Производитель работ', value: 'work_foreman' },
+  ];
+
+  const handleFieldChange = (item) => {
+    setSelectedField(item || null);
+  };
+
+  const handleApplyFilter = () => {
+    if (selectedField && filterValue && filterValue.trim() !== '') {
+      onFilter(selectedField.value, filterValue);
+    }
+  };
+
+  const handleReset = () => {
+    setSelectedField(null);
+    setFilterValue('');
+    onReset();
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <Card verticalSpace="l" horizontalSpace="l" style={{ minWidth: '300px' }}>
-        <h3>{title}</h3>
-        <p>{message}</p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-          <Button label="Отмена" view="ghost" onClick={onClose} />
-          <Button label="Подтвердить" onClick={onConfirm} />
-        </div>
-      </Card>
-    </Modal>
+    <Card verticalSpace="m" horizontalSpace="m" style={{ marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Select
+          placeholder="Выберите поле"
+          items={fieldOptions}
+          value={selectedField}
+          onChange={handleFieldChange}
+          style={{ width: '200px' }}
+        />
+        <TextField
+          placeholder="Значение для фильтрации"
+          value={filterValue}
+          onChange={({ value }) => setFilterValue(value || '')}
+          style={{ width: '250px' }}
+        />
+        <Button label="Применить фильтр" onClick={handleApplyFilter} />
+        <Button label="Сбросить" view="ghost" onClick={handleReset} />
+      </div>
+    </Card>
   );
 };
 
-export default ConfirmDialog;
+export default FilterPanel;

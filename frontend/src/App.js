@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Theme, presetGpnDefault } from '@consta/uikit/Theme';
 import { Button } from '@consta/uikit/Button';
 import { Table } from '@consta/uikit/Table';
+import { SnackBar } from '@consta/uikit/SnackBar';
 import FilterPanel from './components/FilterPanel';
 import WorkForm from './components/WorkForm';
 import ConfirmDialog from './components/ConfirmDialog';
-import axios from 'axios';
+import { worksApi } from './api/works';
 
 function App() {
   const [data, setData] = useState([]);
@@ -14,73 +15,55 @@ function App() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState(null);
   const [workToDelete, setWorkToDelete] = useState(null);
+  
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentFilter, setCurrentFilter] = useState({ field: null, value: null });
+  
+  const [snacks, setSnacks] = useState([]);
 
-  const fetchData = async (field = null, value = null) => {
+  const showNotification = (message, status = 'success') => {
+    setSnacks(prev => [...prev, { message, status, autoClose: true, key: Date.now() }]);
+  };
+
+  const fetchData = async (newPage = 1, field = null, value = null) => {
     setLoading(true);
     try {
-      let url = 'http://localhost:8000/api/works';
+      const params = { page: newPage, limit: 100 };
       if (field && value) {
-        url = `http://localhost:8000/api/works?field=${field}&value=${encodeURIComponent(value)}`;
+        params.field = field;
+        params.value = value;
       }
-      const response = await axios.get(url);
-      const items = response.data.items || [];
-
-      // ============================================================
-      // ГЛАВНОЕ ИЗМЕНЕНИЕ: добавляем кнопки в каждую строку вручную
-      // ============================================================
-      const itemsWithButtons = items.map((item) => ({
-        ...item,
-        actions: (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => handleEdit(item)}
-              style={{
-                cursor: 'pointer',
-                padding: '4px 8px',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-              }}
-            >
-              Редактировать
-            </button>
-            <button
-              onClick={() => handleDelete(item)}
-              style={{
-                cursor: 'pointer',
-                padding: '4px 8px',
-                backgroundColor: '#f44336',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-              }}
-            >
-              Удалить
-            </button>
-          </div>
-        ),
-      }));
-      // ============================================================
-
-      setData(itemsWithButtons);
+      const response = await worksApi.getAll(params);
+      setData(response.data.items || []);
+      setTotal(response.data.total || 0);
+      setTotalPages(response.data.total_pages || 0);
+      setPage(newPage);
     } catch (error) {
       console.error('Ошибка:', error);
+      showNotification('Ошибка загрузки данных', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(1);
   }, []);
 
   const handleFilter = (field, value) => {
-    fetchData(field, value);
+    setCurrentFilter({ field, value });
+    fetchData(1, field, value);
   };
 
   const handleResetFilter = () => {
-    fetchData();
+    setCurrentFilter({ field: null, value: null });
+    fetchData(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    fetchData(newPage, currentFilter.field, currentFilter.value);
   };
 
   const handleAdd = () => {
@@ -101,12 +84,12 @@ function App() {
   const handleConfirmDelete = async () => {
     if (workToDelete) {
       try {
-        await axios.delete(`http://localhost:8000/api/works/${workToDelete.id}`);
-        fetchData();
-        alert('Запись удалена');
+        await worksApi.delete(workToDelete.id);
+        fetchData(page, currentFilter.field, currentFilter.value);
+        showNotification('Запись удалена');
       } catch (error) {
         console.error('Ошибка:', error);
-        alert('Ошибка при удалении');
+        showNotification('Ошибка при удалении', 'error');
       } finally {
         setIsConfirmOpen(false);
         setWorkToDelete(null);
@@ -117,39 +100,43 @@ function App() {
   const handleSubmitForm = async (formData) => {
     try {
       if (selectedWork) {
-        await axios.put(`http://localhost:8000/api/works/${selectedWork.id}`, formData);
-        alert('Запись обновлена');
+        await worksApi.update(selectedWork.id, formData);
+        showNotification('Запись обновлена');
       } else {
-        await axios.post('http://localhost:8000/api/works', formData);
-        alert('Запись добавлена');
+        await worksApi.create(formData);
+        showNotification('Запись добавлена');
       }
-      fetchData();
+      fetchData(page, currentFilter.field, currentFilter.value);
       setIsFormOpen(false);
       setSelectedWork(null);
     } catch (error) {
       console.error('Ошибка:', error);
-      alert(error.response?.data?.detail || 'Произошла ошибка');
+      showNotification(error.response?.data?.detail || 'Произошла ошибка', 'error');
     }
   };
 
-  // ============================================================
-  // КОЛОНКИ: теперь просто выводим поле 'actions', где уже лежат кнопки
-  // ============================================================
   const columns = [
     { title: 'Номер документа', accessor: 'doc_number' },
     { title: 'Статус', accessor: 'status' },
     { title: 'Вид НД', accessor: 'work_type' },
     { title: 'Подразделение', accessor: 'department' },
     { title: 'Производитель работ', accessor: 'work_foreman' },
-    { title: 'Действия', accessor: 'actions' },  // <-- просто выводим готовые кнопки
+    {
+      title: 'Действия',
+      cell: (row) => (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button size="s" onClick={() => handleEdit(row)}>Редактировать</Button>
+          <Button size="s" view="ghost" onClick={() => handleDelete(row)}>Удалить</Button>
+        </div>
+      ),
+    },
   ];
-  // ============================================================
 
   return (
     <Theme preset={presetGpnDefault}>
       <div style={{ padding: '20px' }}>
         <h1>Наряд-допуски</h1>
-        <h3>Всего записей: {data.length}</h3>
+        <h3>Всего записей: {total}</h3>
         
         <FilterPanel onFilter={handleFilter} onReset={handleResetFilter} />
         
@@ -158,6 +145,22 @@ function App() {
         </div>
         
         <Table columns={columns} rows={data} loading={loading} />
+        
+        {totalPages > 1 && (
+          <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
+            <Button 
+              label="◀ Предыдущая" 
+              disabled={page === 1}
+              onClick={() => handlePageChange(page - 1)}
+            />
+            <span>Страница {page} из {totalPages}</span>
+            <Button 
+              label="Следующая ▶" 
+              disabled={page === totalPages}
+              onClick={() => handlePageChange(page + 1)}
+            />
+          </div>
+        )}
         
         <WorkForm
           isOpen={isFormOpen}
@@ -176,6 +179,11 @@ function App() {
           onConfirm={handleConfirmDelete}
           title="Подтверждение удаления"
           message={`Удалить запись "${workToDelete?.doc_number}"?`}
+        />
+        
+        <SnackBar
+          items={snacks}
+          onItemClose={(item) => setSnacks(prev => prev.filter(i => i.key !== item.key))}
         />
       </div>
     </Theme>
