@@ -9,26 +9,36 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+import logging
+from typing import List, Optional, Dict, Any
+from sqlalchemy.orm import Session
+from app.dao.base_dao import BaseDAO
+from app.models import StagingWork
+
+logger = logging.getLogger(__name__)
+
 class StagingDAO(BaseDAO[StagingWork]):
     
     def __init__(self, db_session: Session):
         super().__init__(StagingWork, db_session)
     
-    def get_unprocessed(self) -> List[StagingWork]:
-        """Получение необработанных записей"""
-        return self.db.query(StagingWork).filter(StagingWork.processed == 0).all()
-    
-    def get_by_product_code(self, product_code: str) -> Optional[StagingWork]:
-        """Получение записи по коду продукта"""
-        return self.db.query(StagingWork).filter(
-            StagingWork.product_code == product_code
-        ).first()
-    
     def get_by_doc_number(self, doc_number: str) -> Optional[StagingWork]:
-        """Получение записи по номеру документа"""
         return self.db.query(StagingWork).filter(
             StagingWork.doc_number == doc_number
         ).first()
+    
+    def batch_create(self, items: List[Dict[str, Any]]) -> List[StagingWork]:
+        instances = []
+        for item in items:
+            instance = self.create(**item)
+            instances.append(instance)
+        self.db.flush()
+        return instances
+    
+    def clear(self) -> int:
+        count = self.db.query(StagingWork).count()
+        self.db.query(StagingWork).delete()
+        return count
     
     def mark_as_processed(self, ids: List[int]) -> int:
         """Отметить записи как обработанные"""

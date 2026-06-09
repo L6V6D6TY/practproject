@@ -15,6 +15,9 @@ class BaseDAO(Generic[ModelType]):
     def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
         return self.db.query(self.model).offset(skip).limit(limit).all()
     
+    def get_all(self) -> List[ModelType]:
+        return self.db.query(self.model).all()
+    
     def create(self, **kwargs) -> ModelType:
         instance = self.model(**kwargs)
         self.db.add(instance)
