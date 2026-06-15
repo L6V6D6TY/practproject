@@ -6,14 +6,23 @@ from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 from app.config import config
 from app.services.excel_service import ExcelService
 from app.database import SessionLocal
+import threading
 
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler()
 
+# Блокировки для предотвращения одновременного выполнения
+load_lock = threading.Lock()
+aggregate_lock = threading.Lock()
+
 def load_excel_to_staging():
     """Задача 1: загрузка Excel в промежуточную таблицу (каждые N минут)"""
-    logger.info("Загрузка Excel в staging...")
+    if not load_lock.acquire(blocking=False):
+        logger.info("Загрузка Excel уже выполняется, пропускаем")
+        return
+    
+    logger.info("=== ЗАПУСК load_excel_to_staging ===")
     db = None
     try:
         db = SessionLocal()
@@ -28,10 +37,16 @@ def load_excel_to_staging():
     finally:
         if db:
             db.close()
+        load_lock.release()
+        logger.info("=== КОНЕЦ load_excel_to_staging ===")
 
 def aggregate_and_clear():
     """Задача 2: перенос из staging в summary и очистка staging (раз в день)"""
-    logger.info("Агрегация данных и очистка staging...")
+    if not aggregate_lock.acquire(blocking=False):
+        logger.info("Агрегация уже выполняется, пропускаем")
+        return
+    
+    logger.info("=== ЗАПУСК aggregate_and_clear ===")
     db = None
     try:
         db = SessionLocal()
@@ -43,6 +58,8 @@ def aggregate_and_clear():
     finally:
         if db:
             db.close()
+        aggregate_lock.release()
+        logger.info("=== КОНЕЦ aggregate_and_clear ===")
 
 def init_scheduler() -> BackgroundScheduler:
     # Задача 1: загрузка из Excel в staging — каждые N минут

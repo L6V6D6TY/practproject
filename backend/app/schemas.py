@@ -5,13 +5,19 @@ from datetime import datetime
 class WorkBase(BaseModel):
     doc_number: str
     doc_date: Optional[datetime] = None
+    permit_number: Optional[str] = None
     status: Optional[str] = None
     work_type: Optional[str] = None
+    organization: Optional[str] = None
     department: Optional[str] = None
     unit: Optional[str] = None
     work_location: Optional[str] = None
     work_content: Optional[str] = None
+    plan_start_date: Optional[datetime] = None
+    plan_end_date: Optional[datetime] = None
     work_foreman: Optional[str] = None
+    commission_decision: Optional[str] = None
+    comment: Optional[str] = None
 
 class WorkCreate(WorkBase):
     pass

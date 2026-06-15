@@ -29,9 +29,9 @@ class WorkService:
         update_data = {k: v for k, v in data.model_dump().items() if v is not None}
         return self.dao.update(work, **update_data)
     
-    def delete_work(self, work_id: int) -> bool:
-        work = self.summary_dao.get_by_id(work_id)
+    def delete(self, work_id: int) -> bool:  # ← переименовал с delete_work на delete
+        work = self.dao.get_by_id(work_id)   # ← исправил на self.dao
         if work:
-            self.summary_dao.delete(work)
+            self.dao.delete(work)
             return True
         return False

@@ -16,9 +16,7 @@ def get_works(
     value: Optional[str] = Query(None)
 ):
     service = WorkService(db)
-    works, total = service.get_all_works_paginated(
-        page=page, limit=limit, field=field, value=value
-    )
+    works, total = service.get_all(page=page, limit=limit, field=field, value=value)  # ← исправлено
     return PaginatedResponse.create(
         items=works, total=total, page=page, limit=limit
     )
@@ -26,7 +24,7 @@ def get_works(
 @router.get("/{work_id}", response_model=WorkResponse)
 def get_work(work_id: int, db: Session = Depends(get_db)):
     service = WorkService(db)
-    work = service.get_work_by_id(work_id)
+    work = service.get_by_id(work_id)  # ← исправлено
     if not work:
         raise HTTPException(status_code=404, detail="Запись не найдена")
     return work
@@ -35,8 +33,8 @@ def get_work(work_id: int, db: Session = Depends(get_db)):
 def create_work(work: WorkCreate, db: Session = Depends(get_db)):
     service = WorkService(db)
     try:
-        new_work = service.create_work(work)
-        db.commit()  # ← коммит только здесь
+        new_work = service.create(work)  # ← исправлено
+        db.commit()
         return new_work
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -44,16 +42,16 @@ def create_work(work: WorkCreate, db: Session = Depends(get_db)):
 @router.put("/{work_id}", response_model=WorkResponse)
 def update_work(work_id: int, work_update: WorkUpdate, db: Session = Depends(get_db)):
     service = WorkService(db)
-    updated_work = service.update_work(work_id, work_update)
+    updated_work = service.update(work_id, work_update)  # ← исправлено
     if not updated_work:
         raise HTTPException(status_code=404, detail="Запись не найдена")
-    db.commit()  # ← коммит только здесь
+    db.commit()
     return updated_work
 
 @router.delete("/{work_id}", status_code=204)
 def delete_work(work_id: int, db: Session = Depends(get_db)):
     service = WorkService(db)
-    if not service.delete_work(work_id):
+    if not service.delete(work_id):  # ← исправлено
         raise HTTPException(status_code=404, detail="Запись не найдена")
-    db.commit()  # ← коммит только здесь
+    db.commit()
     return None

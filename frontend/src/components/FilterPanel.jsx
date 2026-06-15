@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { TextField } from '@consta/uikit/TextField';
 import { Button } from '@consta/uikit/Button';
-import { Select } from '@consta/uikit/Select';
 import { Card } from '@consta/uikit/Card';
 
 const FilterPanel = ({ onFilter, onReset }) => {
-  const [selectedField, setSelectedField] = useState(null);
+  const [selectedField, setSelectedField] = useState('');
   const [filterValue, setFilterValue] = useState('');
 
   const fieldOptions = [
@@ -16,18 +14,14 @@ const FilterPanel = ({ onFilter, onReset }) => {
     { label: 'Производитель работ', value: 'work_foreman' },
   ];
 
-  const handleFieldChange = (item) => {
-    setSelectedField(item || null);
-  };
-
   const handleApplyFilter = () => {
     if (selectedField && filterValue && filterValue.trim() !== '') {
-      onFilter(selectedField.value, filterValue);
+      onFilter(selectedField, filterValue);
     }
   };
 
   const handleReset = () => {
-    setSelectedField(null);
+    setSelectedField('');
     setFilterValue('');
     onReset();
   };
@@ -35,19 +29,43 @@ const FilterPanel = ({ onFilter, onReset }) => {
   return (
     <Card verticalSpace="m" horizontalSpace="m" style={{ marginBottom: '20px' }}>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <Select
-          placeholder="Выберите поле"
-          items={fieldOptions}
+        
+        <select
           value={selectedField}
-          onChange={handleFieldChange}
-          style={{ width: '200px' }}
-        />
-        <TextField
+          onChange={(e) => setSelectedField(e.target.value)}
+          style={{
+            padding: '8px 12px',
+            fontSize: '14px',
+            borderRadius: '4px',
+            border: '1px solid #ccc',
+            backgroundColor: 'white',
+            width: '200px',
+            height: '36px'
+          }}
+        >
+          <option value="">Выберите поле</option>
+          {fieldOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="text"
           placeholder="Значение для фильтрации"
           value={filterValue}
-          onChange={({ value }) => setFilterValue(value || '')}
-          style={{ width: '250px' }}
+          onChange={(e) => setFilterValue(e.target.value)}
+          style={{
+            padding: '8px 12px',
+            fontSize: '14px',
+            borderRadius: '4px',
+            border: '1px solid #ccc',
+            width: '250px',
+            height: '36px'
+          }}
         />
+
         <Button label="Применить фильтр" onClick={handleApplyFilter} />
         <Button label="Сбросить" view="ghost" onClick={handleReset} />
       </div>
