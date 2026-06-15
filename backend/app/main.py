@@ -67,6 +67,3 @@ def root():
 def health_check():
     """Проверка здоровья приложения"""
     return {"status": "healthy"}
-
-# ВРЕМЕННЫЙ ЭНДПОИНТ ДЛЯ РУЧНОЙ ЗАГРУЗКИ EXCEL
-@app.post("/manual-load")
