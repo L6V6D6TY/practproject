@@ -87,7 +87,7 @@ def manual_load():
     finally:
         db.close()
 
-@app.get("/manual-load")
+@app.get("/manual-transfer")
 def manual_load():
     from app.services.excel_service import ExcelService
     from app.database import SessionLocal
