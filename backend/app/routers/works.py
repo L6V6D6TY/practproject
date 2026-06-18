@@ -16,7 +16,9 @@ def get_works(
     value: Optional[str] = Query(None)
 ):
     service = WorkService(db)
-    works, total = service.get_all(page=page, limit=limit, field=field, value=value)  # ← исправлено
+    works, total = service.get_all(  # ← исправлено
+        page=page, limit=limit, field=field, value=value
+    )
     return PaginatedResponse.create(
         items=works, total=total, page=page, limit=limit
     )
