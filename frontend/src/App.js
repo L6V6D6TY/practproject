@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Theme, presetGpnDefault } from '@consta/uikit/Theme';
 import { Button } from '@consta/uikit/Button';
 import { Table } from '@consta/uikit/Table';
@@ -15,29 +15,19 @@ function App() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState(null);
   const [workToDelete, setWorkToDelete] = useState(null);
-  
+
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentFilter, setCurrentFilter] = useState({ field: null, value: null });
-  
+
   const [snacks, setSnacks] = useState([]);
 
   const showNotification = (message, status = 'success') => {
-    setSnacks(prev => [...prev, { message, status, autoClose: true, key: Date.now() }]);
+    setSnacks((prev) => [...prev, { message, status, autoClose: true, key: Date.now() }]);
   };
 
-  const handleEdit = (work) => {
-    setSelectedWork(work);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (work) => {
-    setWorkToDelete(work);
-    setIsConfirmOpen(true);
-  };
-
-  const fetchData = async (newPage = 1, field = null, value = null) => {
+  const fetchData = useCallback(async (newPage = 1, field = null, value = null) => {
     setLoading(true);
     try {
       const params = { page: newPage, limit: 100 };
@@ -47,13 +37,16 @@ function App() {
       }
       const response = await worksApi.getAll(params);
       const items = response.data.items || [];
-      
+
       const itemsWithButtons = items.map((item) => ({
         ...item,
         actions: (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => handleEdit(item)}
+              onClick={() => {
+                setSelectedWork(item);
+                setIsFormOpen(true);
+              }}
               style={{
                 cursor: 'pointer',
                 padding: '4px 8px',
@@ -61,13 +54,16 @@ function App() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                fontSize: '12px'
+                fontSize: '12px',
               }}
             >
               Редактировать
             </button>
             <button
-              onClick={() => handleDelete(item)}
+              onClick={() => {
+                setWorkToDelete(item);
+                setIsConfirmOpen(true);
+              }}
               style={{
                 cursor: 'pointer',
                 padding: '4px 8px',
@@ -75,7 +71,7 @@ function App() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                fontSize: '12px'
+                fontSize: '12px',
               }}
             >
               Удалить
@@ -83,7 +79,7 @@ function App() {
           </div>
         ),
       }));
-      
+
       setData(itemsWithButtons);
       setTotal(response.data.total || 0);
       setTotalPages(response.data.total_pages || 0);
@@ -94,11 +90,11 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData(1);
-  }, []);
+  }, [fetchData]);
 
   const handleFilter = (field, value) => {
     setCurrentFilter({ field, value });
@@ -154,12 +150,12 @@ function App() {
   };
 
   const columns = [
-    { title: 'Номер документа', accessor: 'doc_number' },
-    { title: 'Статус', accessor: 'status' },
-    { title: 'Вид НД', accessor: 'work_type' },
-    { title: 'Подразделение', accessor: 'department' },
-    { title: 'Производитель работ', accessor: 'work_foreman' },
-    { title: 'Действия', accessor: 'actions' },
+    { title: 'Номер документа', accessor: 'doc_number', width: '150px' },
+    { title: 'Статус', accessor: 'status', width: '120px' },
+    { title: 'Вид НД', accessor: 'work_type', width: '150px' },
+    { title: 'Подразделение', accessor: 'department', width: '150px' },
+    { title: 'Производитель работ', accessor: 'work_foreman', width: '200px' },
+    { title: 'Действия', accessor: 'actions', width: '200px' },
   ];
 
   return (
@@ -167,31 +163,41 @@ function App() {
       <div style={{ padding: '20px' }}>
         <h1>Наряд-допуски</h1>
         <h3>Всего записей: {total}</h3>
-        
+
         <FilterPanel onFilter={handleFilter} onReset={handleResetFilter} />
-        
+
         <div style={{ marginBottom: '20px' }}>
           <Button label="Добавить запись" onClick={handleAdd} />
         </div>
-        
+
         <Table columns={columns} rows={data} loading={loading} />
-        
+
         {totalPages > 1 && (
-          <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
-            <Button 
-              label="◀ Предыдущая" 
+          <div
+            style={{
+              marginTop: '20px',
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Button
+              label="◀ Предыдущая"
               disabled={page === 1}
               onClick={() => handlePageChange(page - 1)}
             />
-            <span>Страница {page} из {totalPages}</span>
-            <Button 
-              label="Следующая ▶" 
+            <span>
+              Страница {page} из {totalPages}
+            </span>
+            <Button
+              label="Следующая ▶"
               disabled={page === totalPages}
               onClick={() => handlePageChange(page + 1)}
             />
           </div>
         )}
-        
+
         <WorkForm
           isOpen={isFormOpen}
           onClose={() => {
@@ -202,7 +208,7 @@ function App() {
           initialData={selectedWork}
           isEditing={!!selectedWork}
         />
-        
+
         <ConfirmDialog
           isOpen={isConfirmOpen}
           onClose={() => setIsConfirmOpen(false)}
@@ -210,10 +216,10 @@ function App() {
           title="Подтверждение удаления"
           message={`Удалить запись "${workToDelete?.doc_number}"?`}
         />
-        
+
         <SnackBar
           items={snacks}
-          onItemClose={(item) => setSnacks(prev => prev.filter(i => i.key !== item.key))}
+          onItemClose={(item) => setSnacks((prev) => prev.filter((i) => i.key !== item.key))}
         />
       </div>
     </Theme>
