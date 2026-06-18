@@ -19,6 +19,12 @@ class StagingWork(Base):
     file_name = Column(String(255), nullable=True)
     loaded_at = Column(DateTime(timezone=True), server_default=func.now())
     processed = Column(Integer, default=0)
+    permit_number = Column(String(50), nullable=True)
+    organization = Column(String(200), nullable=True)
+    plan_start_date = Column(DateTime, nullable=True)
+    plan_end_date = Column(DateTime, nullable=True)
+    commission_decision = Column(String(50), nullable=True)
+    comment = Column(Text, nullable=True)
 
 class SummaryWork(Base):
     """Сводная (накопительная) таблица"""
@@ -37,3 +43,9 @@ class SummaryWork(Base):
     load_count = Column(Integer, default=1)
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    permit_number = Column(String(50), nullable=True)
+    organization = Column(String(200), nullable=True)
+    plan_start_date = Column(DateTime, nullable=True)
+    plan_end_date = Column(DateTime, nullable=True)
+    commission_decision = Column(String(50), nullable=True)
+    comment = Column(Text, nullable=True)

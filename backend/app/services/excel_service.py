@@ -40,34 +40,55 @@ class ExcelService:
         """Только загрузка Excel в staging (без переноса в summary)"""
         file_path = config.EXCEL_FULL_PATH
         
+        logger.info("=== НАЧАЛО load_excel_only ===")
+        logger.info(f"Путь к файлу: {file_path}")
+        
         try:
             if not os.path.exists(file_path):
+                logger.error(f"Файл НЕ НАЙДЕН: {file_path}")
                 raise FileNotFoundError(f"Файл не найден: {file_path}")
             
-            logger.info(f"Загрузка Excel в staging: {file_path}")
+            logger.info(f"Файл найден, размер: {os.path.getsize(file_path)} байт")
+            
             df = pd.read_excel(file_path, engine='openpyxl')
+            logger.info(f"Прочитано строк: {len(df)}")
+            logger.info(f"Колонки в Excel: {list(df.columns)}")
+            
             df = df.rename(columns=self.COLUMN_MAPPING)
+            logger.info(f"Колонки после маппинга: {list(df.columns)}")
+            
             df = self._clean_data(df)
+            logger.info(f"После очистки осталось строк: {len(df)}")
             
             if df.empty:
+                logger.warning("Нет валидных данных после очистки")
                 return False, "Нет валидных данных", 0
             
             staging_items = self._prepare_staging_data(df)
+            logger.info(f"Подготовлено записей для staging: {len(staging_items)}")
+            
             instances = []
             for item in staging_items:
                 instance = self.staging_dao.create(**item)
                 instances.append(instance)
             
+            logger.info(f"Создано записей: {len(instances)}")
             self.db_session.commit()
+            logger.info("=== КОНЕЦ load_excel_only (УСПЕШНО) ===")
             return True, f"Загружено {len(instances)} записей", len(instances)
             
         except Exception as e:
             logger.error(f"Ошибка: {str(e)}")
+            self.db_session.rollback()
+            logger.info("=== КОНЕЦ load_excel_only (ОШИБКА) ===")
             return False, str(e), 0
     
     def transfer_to_summary_and_clear(self) -> int:
         """Перенос всех данных из staging в summary и очистка staging"""
+        logger.info("=== НАЧАЛО transfer_to_summary_and_clear ===")
+        
         staging_items = self.staging_dao.get_all()
+        logger.info(f"Найдено в staging: {len(staging_items)} записей")
         
         if not staging_items:
             logger.info("Нет данных в staging для переноса")
@@ -93,12 +114,14 @@ class ExcelService:
                 comment=staging.comment
             )
             processed_count += 1
+            logger.debug(f"Обработано {processed_count} из {len(staging_items)}")
         
         # Очищаем staging
         self.staging_dao.clear()
         self.db_session.commit()
         
         logger.info(f"Перенесено {processed_count} записей, staging очищен")
+        logger.info("=== КОНЕЦ transfer_to_summary_and_clear ===")
         return processed_count
     
     def _clean_data(self, df: pd.DataFrame) -> pd.DataFrame:

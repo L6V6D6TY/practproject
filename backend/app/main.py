@@ -67,3 +67,40 @@ def root():
 def health_check():
     """Проверка здоровья приложения"""
     return {"status": "healthy"}
+
+# ВРЕМЕННЫЕ ЭНДПОИНТЫ ДЛЯ ОТЛАДКИ (удалить после решения проблемы)
+@app.post("/manual-load")
+def manual_load():
+    from app.services.excel_service import ExcelService
+    from app.database import SessionLocal
+    
+    logger.info("=== РУЧНАЯ ЗАГРУЗКА EXCEL ===")
+    db = SessionLocal()
+    try:
+        service = ExcelService(db)
+        success, message, count = service.load_excel_only()
+        logger.info(f"Результат: success={success}, count={count}, message={message}")
+        return {"success": success, "message": message, "count": count}
+    except Exception as e:
+        logger.error(f"Ошибка: {str(e)}")
+        return {"success": False, "error": str(e)}
+    finally:
+        db.close()
+
+@app.get("/manual-transfer")
+def manual_load():
+    from app.services.excel_service import ExcelService
+    from app.database import SessionLocal
+    
+    logger.info("=== РУЧНОЙ ПЕРЕНОС ИЗ STAGING В SUMMARY ===")
+    db = SessionLocal()
+    try:
+        service = ExcelService(db)
+        count = service.transfer_to_summary_and_clear()
+        logger.info(f"Перенесено {count} записей")
+        return {"success": True, "count": count}
+    except Exception as e:
+        logger.error(f"Ошибка: {str(e)}")
+        return {"success": False, "error": str(e)}
+    finally:
+        db.close()

@@ -27,6 +27,16 @@ function App() {
     setSnacks(prev => [...prev, { message, status, autoClose: true, key: Date.now() }]);
   };
 
+  const handleEdit = (work) => {
+    setSelectedWork(work);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (work) => {
+    setWorkToDelete(work);
+    setIsConfirmOpen(true);
+  };
+
   const fetchData = async (newPage = 1, field = null, value = null) => {
     setLoading(true);
     try {
@@ -36,7 +46,45 @@ function App() {
         params.value = value;
       }
       const response = await worksApi.getAll(params);
-      setData(response.data.items || []);
+      const items = response.data.items || [];
+      
+      const itemsWithButtons = items.map((item) => ({
+        ...item,
+        actions: (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => handleEdit(item)}
+              style={{
+                cursor: 'pointer',
+                padding: '4px 8px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px'
+              }}
+            >
+              Редактировать
+            </button>
+            <button
+              onClick={() => handleDelete(item)}
+              style={{
+                cursor: 'pointer',
+                padding: '4px 8px',
+                backgroundColor: '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px'
+              }}
+            >
+              Удалить
+            </button>
+          </div>
+        ),
+      }));
+      
+      setData(itemsWithButtons);
       setTotal(response.data.total || 0);
       setTotalPages(response.data.total_pages || 0);
       setPage(newPage);
@@ -69,16 +117,6 @@ function App() {
   const handleAdd = () => {
     setSelectedWork(null);
     setIsFormOpen(true);
-  };
-
-  const handleEdit = (work) => {
-    setSelectedWork(work);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (work) => {
-    setWorkToDelete(work);
-    setIsConfirmOpen(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -121,15 +159,7 @@ function App() {
     { title: 'Вид НД', accessor: 'work_type' },
     { title: 'Подразделение', accessor: 'department' },
     { title: 'Производитель работ', accessor: 'work_foreman' },
-    {
-      title: 'Действия',
-      cell: (row) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button size="s" onClick={() => handleEdit(row)}>Редактировать</Button>
-          <Button size="s" view="ghost" onClick={() => handleDelete(row)}>Удалить</Button>
-        </div>
-      ),
-    },
+    { title: 'Действия', accessor: 'actions' },
   ];
 
   return (
